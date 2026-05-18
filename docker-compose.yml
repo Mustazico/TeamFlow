@@ -49,6 +49,7 @@ services:
       - api
     environment:
       API_UPSTREAM: http://api:8080
+      API_HOST: api
     ports:
       - "8080:80"
 

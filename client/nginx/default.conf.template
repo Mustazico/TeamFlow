@@ -9,6 +9,8 @@ server {
     gzip_types text/plain text/css application/json application/javascript application/xml text/xml image/svg+xml;
     gzip_min_length 1024;
 
+    resolver 1.1.1.1 8.8.8.8 valid=30s ipv6=off;
+
     location /assets/ {
         expires 1y;
         add_header Cache-Control "public, immutable";
@@ -20,10 +22,11 @@ server {
     }
 
     location /api/ {
-        proxy_pass ${API_UPSTREAM}/api/;
+        set $api_backend "${API_UPSTREAM}";
+        proxy_pass $api_backend;
         proxy_http_version 1.1;
         proxy_ssl_server_name on;
-        proxy_set_header Host $proxy_host;
+        proxy_set_header Host ${API_HOST};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
