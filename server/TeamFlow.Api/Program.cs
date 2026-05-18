@@ -144,6 +144,7 @@ app.UseCors(CorsPolicy);
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<ReadOnlyGuestMiddleware>();
 
 app.MapHealthChecks("/health");
 app.MapControllers();

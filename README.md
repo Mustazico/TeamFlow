@@ -6,7 +6,10 @@ A production-shaped team / project / task workspace. Kanban, comments with @ment
 
 Built to demonstrate Clean Architecture in .NET 10 and a modern React 19 + Tailwind v4 client end-to-end.
 
-**Live demo:** _(deploy to Fly.io, then paste URL here)_
+**Live demo:** https://teamflow-web.onrender.com
+_(Free tier — first request after 15 min idle may take ~30 s to wake.)_
+**Demo login:** `admin@teamflow.local` / `Admin#12345`
+**Or browse read-only:** `guest@teamflow.local` / `Guest#12345` (also available via the **Continue as guest** button on the login page)
 
 ---
 

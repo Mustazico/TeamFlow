@@ -62,6 +62,25 @@ export function LoginPage() {
         <Button type="submit" className="w-full" disabled={mutation.isPending}>
           {mutation.isPending ? 'Signing in…' : 'Sign in'}
         </Button>
+        <div className="relative my-2">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-slate-200" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-2 text-slate-500">Or</span>
+          </div>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          disabled={mutation.isPending}
+          onClick={() =>
+            mutation.mutate({ email: 'guest@teamflow.local', password: 'Guest#12345' })
+          }
+        >
+          Continue as guest (read-only)
+        </Button>
         <p className="text-sm text-center text-slate-600">
           Don't have an account?{' '}
           <Link to="/register" className="text-indigo-600 hover:underline font-medium">
