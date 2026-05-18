@@ -40,17 +40,29 @@ export function TaskDetailDrawer({ taskId, projectId, onClose }: Props) {
     enabled: !!taskId,
   });
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<TaskStatus>('Todo');
-  const [priority, setPriority] = useState<TaskPriority>('Medium');
-  const [assigneeId, setAssigneeId] = useState<string>('');
-  const [dueDate, setDueDate] = useState('');
+  const [title, setTitle] = useState(task?.title ?? '');
+  const [description, setDescription] = useState(task?.description ?? '');
+  const [status, setStatus] = useState<TaskStatus>(task?.status ?? 'Todo');
+  const [priority, setPriority] = useState<TaskPriority>(task?.priority ?? 'Medium');
+  const [assigneeId, setAssigneeId] = useState<string>(task?.assigneeId ?? '');
+  const [dueDate, setDueDate] = useState(task?.dueDate ? task.dueDate.slice(0, 10) : '');
   const [comment, setComment] = useState('');
   const [mentioned, setMentioned] = useState<Map<string, string>>(new Map());
   const [mentionOpen, setMentionOpen] = useState(false);
   const mentionRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [lastTaskId, setLastTaskId] = useState<string | undefined>(task?.id);
+
+  // Sync form state when the loaded task changes (replaces useEffect + setState)
+  if (task && task.id !== lastTaskId) {
+    setLastTaskId(task.id);
+    setTitle(task.title);
+    setDescription(task.description ?? '');
+    setStatus(task.status);
+    setPriority(task.priority);
+    setAssigneeId(task.assigneeId ?? '');
+    setDueDate(task.dueDate ? task.dueDate.slice(0, 10) : '');
+  }
 
   useEffect(() => {
     if (!mentionOpen) return;
@@ -60,17 +72,6 @@ export function TaskDetailDrawer({ taskId, projectId, onClose }: Props) {
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [mentionOpen]);
-
-  useEffect(() => {
-    if (task) {
-      setTitle(task.title);
-      setDescription(task.description ?? '');
-      setStatus(task.status);
-      setPriority(task.priority);
-      setAssigneeId(task.assigneeId ?? '');
-      setDueDate(task.dueDate ? task.dueDate.slice(0, 10) : '');
-    }
-  }, [task]);
 
   const update = useMutation({
     mutationFn: () =>

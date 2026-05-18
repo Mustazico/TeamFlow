@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -61,9 +61,12 @@ export function ProjectDetailPage() {
   const taskParam = searchParams.get('task');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(taskParam);
 
-  useEffect(() => {
+  // Sync selectedTaskId when URL param changes (e.g. back/forward navigation)
+  if (selectedTaskId !== taskParam && taskParam !== null) {
     setSelectedTaskId(taskParam);
-  }, [taskParam]);
+  } else if (taskParam === null && selectedTaskId !== null && !searchParams.has('task')) {
+    setSelectedTaskId(null);
+  }
 
   const openTask = (id: string) => {
     setSelectedTaskId(id);
