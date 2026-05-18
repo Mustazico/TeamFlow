@@ -8,8 +8,7 @@ Built to demonstrate Clean Architecture in .NET 10 and a modern React 19 + Tailw
 
 **Live demo:** https://teamflow-web.onrender.com
 _(Free tier — first request after 15 min idle may take ~30 s to wake.)_
-**Demo login:** `admin@teamflow.local` / `Admin#12345`
-**Or browse read-only:** `guest@teamflow.local` / `Guest#12345` (also available via the **Continue as guest** button on the login page)
+**Browse read-only:** `guest@teamflow.local` / `Guest#12345` (or click **Continue as guest** on the login page)
 
 ---
 
@@ -144,12 +143,7 @@ npm run dev                            # http://localhost:5173
 
 ### Default seeded admin
 
-After first migration on Development:
-
-- email: `admin@teamflow.local`
-- password: `Admin#12345`
-
-Change immediately in production.
+A local admin account is seeded on first migration in Development. See `server/TeamFlow.Api/Setup/DatabaseSeeder.cs` for the dev credentials, and override them via configuration / environment variables before deploying anywhere public.
 
 ### Required configuration
 
