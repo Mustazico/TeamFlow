@@ -22,9 +22,12 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    # Reverse-proxy API calls to the api service (docker-compose / fly internal)
+    # Reverse-proxy API calls. ${API_UPSTREAM} is substituted at container start
+    # by nginx's built-in templating (envsubst on /etc/nginx/templates/*.template).
+    # Local docker-compose: API_UPSTREAM=http://api:8080
+    # Render:               API_UPSTREAM=https://<api-service>.onrender.com
     location /api/ {
-        proxy_pass http://api:8080/api/;
+        proxy_pass ${API_UPSTREAM}/api/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
