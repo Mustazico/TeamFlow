@@ -118,9 +118,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Auto-migrate on startup (Development + Production).
-// Seeding is opt-in via Seed:Enabled (defaults to true so first deploy gets an admin user;
-// set Seed__Enabled=false in env vars to skip on subsequent restarts).
+// Auto-migrate on startup; seed unless Seed:Enabled is false
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
