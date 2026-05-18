@@ -1,0 +1,31 @@
+# Node / Vite
+node_modules/
+dist/
+.vite/
+*.local
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+appsettings.*.local.json
+
+# Env
+.env
+.env.*
+!.env.example
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+
+# Logs
+*.log
+logs/
+
+# Test
+TestResults/
+coverage/

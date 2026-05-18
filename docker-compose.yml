@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: teamflow-postgres
+    environment:
+      POSTGRES_DB: teamflow
+      POSTGRES_USER: teamflow
+      POSTGRES_PASSWORD: teamflow_dev_pw
+    ports:
+      - "5432:5432"
+    volumes:
+      - teamflow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teamflow -d teamflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: teamflow-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=teamflow;Username=teamflow;Password=teamflow_dev_pw
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-change-me-to-a-32-plus-char-secret-locally}
+      Jwt__Issuer: TeamFlow
+      Jwt__Audience: TeamFlow
+    ports:
+      - "5080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: teamflow-web
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+
+volumes:
+  teamflow_pgdata:

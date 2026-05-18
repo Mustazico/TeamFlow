@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="TeamFlow.Api/TeamFlow.Api.csproj" />
+  <Project Path="TeamFlow.Application/TeamFlow.Application.csproj" />
+  <Project Path="TeamFlow.Domain/TeamFlow.Domain.csproj" />
+  <Project Path="TeamFlow.Infrastructure/TeamFlow.Infrastructure.csproj" />
+  <Project Path="TeamFlow.Tests/TeamFlow.Tests.csproj" />
+</Solution>
