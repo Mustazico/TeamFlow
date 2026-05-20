@@ -15,10 +15,10 @@ import type {
 } from './types';
 
 export const authApi = {
-  register: (data: { email: string; password: string; displayName: string }) =>
-    apiClient.post<AuthResponse>('/auth/register', data).then((r) => r.data),
-  login: (data: { email: string; password: string }) =>
-    apiClient.post<AuthResponse>('/auth/login', data).then((r) => r.data),
+  googleLogin: (idToken: string) =>
+    apiClient.post<AuthResponse>('/auth/google', { idToken }).then((r) => r.data),
+  guestLogin: () =>
+    apiClient.post<AuthResponse>('/auth/guest').then((r) => r.data),
   me: () => apiClient.get<UserDto>('/auth/me').then((r) => r.data),
   logout: (refreshToken: string) =>
     apiClient.post('/auth/logout', { refreshToken }).then((r) => r.data),

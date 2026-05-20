@@ -2,7 +2,6 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { ProtectedRoute } from './ProtectedRoute';
 import { LoginPage } from '@/features/auth/LoginPage';
-import { RegisterPage } from '@/features/auth/RegisterPage';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { ProjectsPage } from '@/features/projects/ProjectsPage';
 import { ProjectDetailPage } from '@/features/projects/ProjectDetailPage';
@@ -12,7 +11,6 @@ import { ActivityPage } from '@/features/activity/ActivityPage';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
-  { path: '/register', element: <RegisterPage /> },
   {
     path: '/',
     element: (

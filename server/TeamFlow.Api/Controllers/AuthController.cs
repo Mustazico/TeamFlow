@@ -16,37 +16,33 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _auth;
     private readonly ICurrentUserService _current;
-    private readonly IValidator<RegisterRequest> _registerValidator;
-    private readonly IValidator<LoginRequest> _loginValidator;
+    private readonly IValidator<GoogleLoginRequest> _googleLoginValidator;
     private readonly IValidator<RefreshRequest> _refreshValidator;
 
     public AuthController(
         IAuthService auth,
         ICurrentUserService current,
-        IValidator<RegisterRequest> registerValidator,
-        IValidator<LoginRequest> loginValidator,
+        IValidator<GoogleLoginRequest> googleLoginValidator,
         IValidator<RefreshRequest> refreshValidator)
     {
         _auth = auth;
         _current = current;
-        _registerValidator = registerValidator;
-        _loginValidator = loginValidator;
+        _googleLoginValidator = googleLoginValidator;
         _refreshValidator = refreshValidator;
     }
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest req, CancellationToken ct)
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest req, CancellationToken ct)
     {
-        await _registerValidator.EnsureValidAsync(req);
-        var result = await _auth.RegisterAsync(req, HttpContext.Connection.RemoteIpAddress?.ToString(), ct);
+        await _googleLoginValidator.EnsureValidAsync(req);
+        var result = await _auth.GoogleLoginAsync(req.IdToken, HttpContext.Connection.RemoteIpAddress?.ToString(), ct);
         return Ok(result);
     }
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest req, CancellationToken ct)
+    [HttpPost("guest")]
+    public async Task<IActionResult> GuestLogin(CancellationToken ct)
     {
-        await _loginValidator.EnsureValidAsync(req);
-        var result = await _auth.LoginAsync(req, HttpContext.Connection.RemoteIpAddress?.ToString(), ct);
+        var result = await _auth.GuestLoginAsync(HttpContext.Connection.RemoteIpAddress?.ToString(), ct);
         return Ok(result);
     }
 

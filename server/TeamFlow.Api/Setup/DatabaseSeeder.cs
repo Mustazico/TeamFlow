@@ -22,8 +22,8 @@ public static class DatabaseSeeder
                 await roleManager.CreateAsync(new ApplicationRole(role));
         }
 
-        var admin = await EnsureUserAsync(userManager, "admin@teamflow.local", "TeamFlow Admin", "Admin#12345", "Admin", "User");
-        var guest = await EnsureUserAsync(userManager, "guest@teamflow.local", "Demo Guest", "Guest#12345", "Guest");
+        var admin = await EnsureUserAsync(userManager, "admin@teamflow.local", "TeamFlow Admin", "Admin", "User");
+        var guest = await EnsureUserAsync(userManager, "guest@teamflow.local", "Demo Guest", "Guest");
 
         var demo = await db.Projects.FirstOrDefaultAsync(p => p.Name == "TeamFlow Demo");
         if (demo is null)
@@ -75,7 +75,6 @@ public static class DatabaseSeeder
         UserManager<ApplicationUser> userManager,
         string email,
         string displayName,
-        string password,
         params string[] roles)
     {
         var user = await userManager.FindByEmailAsync(email);
@@ -88,7 +87,7 @@ public static class DatabaseSeeder
                 DisplayName = displayName,
                 EmailConfirmed = true,
             };
-            await userManager.CreateAsync(user, password);
+            await userManager.CreateAsync(user);
         }
         foreach (var role in roles)
         {

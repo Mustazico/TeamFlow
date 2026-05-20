@@ -1,7 +1,6 @@
 namespace TeamFlow.Application.Auth.Dtos;
 
-public record RegisterRequest(string Email, string Password, string DisplayName);
-public record LoginRequest(string Email, string Password);
+public record GoogleLoginRequest(string IdToken);
 public record RefreshRequest(string RefreshToken);
 public record LogoutRequest(string RefreshToken);
 

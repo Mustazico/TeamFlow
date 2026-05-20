@@ -1,5 +1,7 @@
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using TeamFlow.Application.Auth.Dtos;
 using TeamFlow.Application.Common.Exceptions;
@@ -17,58 +19,85 @@ public class AuthService : Application.Auth.IAuthService
     private readonly ITokenService _tokenService;
     private readonly AppDbContext _db;
     private readonly JwtOptions _jwt;
+    private readonly string _googleClientId;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
         RoleManager<ApplicationRole> roleManager,
         ITokenService tokenService,
         AppDbContext db,
-        IOptions<JwtOptions> jwt)
+        IOptions<JwtOptions> jwt,
+        IConfiguration config)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _tokenService = tokenService;
         _db = db;
         _jwt = jwt.Value;
+        _googleClientId = config["Google:ClientId"]
+            ?? throw new InvalidOperationException("Google:ClientId missing from configuration.");
     }
 
-    public async Task<AuthResponse> RegisterAsync(RegisterRequest req, string? ip, CancellationToken ct)
+    public async Task<AuthResponse> GoogleLoginAsync(string idToken, string? ip, CancellationToken ct)
     {
-        var existing = await _userManager.FindByEmailAsync(req.Email);
-        if (existing is not null)
-            throw new ConflictException("Email is already registered.");
-
-        var user = new ApplicationUser
+        var settings = new GoogleJsonWebSignature.ValidationSettings
         {
-            UserName = req.Email,
-            Email = req.Email,
-            DisplayName = req.DisplayName,
-            EmailConfirmed = true
+            Audience = [_googleClientId]
         };
 
-        var result = await _userManager.CreateAsync(user, req.Password);
-        if (!result.Succeeded)
+        GoogleJsonWebSignature.Payload payload;
+        try
         {
-            var errors = result.Errors
-                .GroupBy(e => e.Code)
-                .ToDictionary(g => g.Key, g => g.Select(x => x.Description).ToArray());
-            throw new ValidationException(errors);
+            payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
+        }
+        catch (InvalidJwtException)
+        {
+            throw new ForbiddenException("Invalid Google token.");
         }
 
-        if (!await _roleManager.RoleExistsAsync("User"))
-            await _roleManager.CreateAsync(new ApplicationRole("User"));
-        await _userManager.AddToRoleAsync(user, "User");
+        var user = await _userManager.FindByEmailAsync(payload.Email);
+        if (user is null)
+        {
+            user = new ApplicationUser
+            {
+                UserName = payload.Email,
+                Email = payload.Email,
+                DisplayName = payload.Name ?? payload.Email,
+                AvatarUrl = payload.Picture,
+                EmailConfirmed = true
+            };
+
+            var result = await _userManager.CreateAsync(user);
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors
+                    .GroupBy(e => e.Code)
+                    .ToDictionary(g => g.Key, g => g.Select(x => x.Description).ToArray());
+                throw new ValidationException(errors);
+            }
+
+            if (!await _roleManager.RoleExistsAsync("User"))
+                await _roleManager.CreateAsync(new ApplicationRole("User"));
+            await _userManager.AddToRoleAsync(user, "User");
+        }
+        else
+        {
+            // Update profile from Google on each login
+            user.AvatarUrl = payload.Picture;
+            if (!string.IsNullOrEmpty(payload.Name))
+                user.DisplayName = payload.Name;
+            await _userManager.UpdateAsync(user);
+        }
 
         return await IssueTokensAsync(user, ip, ct);
     }
 
-    public async Task<AuthResponse> LoginAsync(LoginRequest req, string? ip, CancellationToken ct)
+    public async Task<AuthResponse> GuestLoginAsync(string? ip, CancellationToken ct)
     {
-        var user = await _userManager.FindByEmailAsync(req.Email);
-        if (user is null || !await _userManager.CheckPasswordAsync(user, req.Password))
-            throw new ForbiddenException("Invalid email or password.");
+        var guest = await _userManager.FindByEmailAsync("guest@teamflow.local")
+            ?? throw new ForbiddenException("Guest account not available.");
 
-        return await IssueTokensAsync(user, ip, ct);
+        return await IssueTokensAsync(guest, ip, ct);
     }
 
     public async Task<AuthResponse> RefreshAsync(string refreshToken, string? ip, CancellationToken ct)

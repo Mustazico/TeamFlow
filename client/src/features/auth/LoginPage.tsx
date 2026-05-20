@@ -1,36 +1,22 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
+import { GoogleLogin } from '@react-oauth/google';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/Button';
-import { FieldError, Input, Label } from '@/components/ui/Input';
 import { toast } from 'sonner';
 import { isAxiosError } from 'axios';
-
-const schema = z.object({
-  email: z.string().email('Enter a valid email'),
-  password: z.string().min(1, 'Password is required'),
-});
-type FormValues = z.infer<typeof schema>;
 
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation() as { state?: { from?: { pathname?: string } } };
   const setAuth = useAuthStore((s) => s.setAuth);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
-  const mutation = useMutation({
-    mutationFn: authApi.login,
+  const googleMutation = useMutation({
+    mutationFn: authApi.googleLogin,
     onSuccess: (data) => {
       setAuth(data);
-      toast.success(`Welcome back, ${data.user.displayName}`);
+      toast.success(`Welcome, ${data.user.displayName}`);
       navigate(location.state?.from?.pathname ?? '/dashboard', { replace: true });
     },
     onError: (err) => {
@@ -41,27 +27,34 @@ export function LoginPage() {
     },
   });
 
+  const guestMutation = useMutation({
+    mutationFn: authApi.guestLogin,
+    onSuccess: (data) => {
+      setAuth(data);
+      toast.success('Signed in as guest (read-only)');
+      navigate(location.state?.from?.pathname ?? '/dashboard', { replace: true });
+    },
+    onError: () => {
+      toast.error('Guest login failed');
+    },
+  });
+
   return (
-    <AuthShell title="Sign in to TeamFlow" subtitle="Welcome back. Sign in to continue.">
-      <form onSubmit={handleSubmit((v) => mutation.mutate(v))} className="space-y-4">
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" autoComplete="email" {...register('email')} />
-          <FieldError message={errors.email?.message} />
-        </div>
-        <div>
-          <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            {...register('password')}
+    <AuthShell title="Sign in to TeamFlow" subtitle="Sign in with your Google account to continue.">
+      <div className="space-y-4">
+        <div className="flex justify-center">
+          <GoogleLogin
+            onSuccess={(credentialResponse) => {
+              if (credentialResponse.credential) {
+                googleMutation.mutate(credentialResponse.credential);
+              }
+            }}
+            onError={() => toast.error('Google sign-in failed')}
+            size="large"
+            width="100%"
+            text="signin_with"
           />
-          <FieldError message={errors.password?.message} />
         </div>
-        <Button type="submit" className="w-full" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Signing in…' : 'Sign in'}
-        </Button>
         <div className="relative my-2">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t border-slate-200" />
@@ -74,20 +67,12 @@ export function LoginPage() {
           type="button"
           variant="outline"
           className="w-full"
-          disabled={mutation.isPending}
-          onClick={() =>
-            mutation.mutate({ email: 'guest@teamflow.local', password: 'Guest#12345' })
-          }
+          disabled={guestMutation.isPending}
+          onClick={() => guestMutation.mutate()}
         >
-          Continue as guest (read-only)
+          {guestMutation.isPending ? 'Signing in…' : 'Continue as guest (read-only)'}
         </Button>
-        <p className="text-sm text-center text-slate-600">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-indigo-600 hover:underline font-medium">
-            Create one
-          </Link>
-        </p>
-      </form>
+      </div>
     </AuthShell>
   );
 }
