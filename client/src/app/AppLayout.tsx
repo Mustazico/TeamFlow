@@ -32,7 +32,7 @@ export function AppLayout() {
 
   return (
     <div className="h-screen flex">
-      <aside className="w-60 bg-slate-900 text-slate-100 flex flex-col h-screen sticky top-0">
+      <aside className="hidden md:flex w-60 bg-slate-900 text-slate-100 flex-col h-screen sticky top-0">
         <div className="px-5 py-5 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-md bg-indigo-500 flex items-center justify-center font-bold">
@@ -80,13 +80,56 @@ export function AppLayout() {
         </div>
       </aside>
       <main className="flex-1 overflow-hidden flex flex-col h-screen">
-        <header className="h-14 shrink-0 border-b border-slate-200 bg-white flex items-center justify-end px-6 gap-2">
-          <ThemeToggle />
-          <NotificationBell />
+        <header className="h-14 shrink-0 border-b border-slate-200 bg-white flex items-center justify-between md:justify-end px-4 md:px-6 gap-2">
+          <div className="flex items-center gap-2 md:hidden">
+            <div className="h-8 w-8 rounded-md bg-indigo-500 flex items-center justify-center font-bold text-white">
+              T
+            </div>
+            <span className="font-semibold text-lg text-slate-900">TeamFlow</span>
+          </div>
+          <div className="flex items-center gap-1 md:gap-2">
+            <ThemeToggle />
+            <NotificationBell />
+            {user && (
+              <div className="flex items-center gap-1 md:hidden">
+                <Avatar name={user.displayName} size="sm" />
+                <button
+                  onClick={logout}
+                  className="p-2 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  aria-label="Sign out"
+                  title="Sign out"
+                >
+                  <LogOut size={18} />
+                </button>
+              </div>
+            )}
+          </div>
         </header>
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           <Outlet />
         </div>
+        <nav
+          aria-label="Primary"
+          className="md:hidden shrink-0 h-16 bg-white border-t border-slate-200 shadow-[0_-1px_3px_rgba(0,0,0,0.05)] grid grid-cols-4"
+        >
+          {navItems.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                cn(
+                  'flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors',
+                  isActive
+                    ? 'text-indigo-600'
+                    : 'text-slate-500 hover:text-slate-900',
+                )
+              }
+            >
+              <Icon size={20} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </nav>
       </main>
     </div>
   );

@@ -10,7 +10,7 @@ import { Card, CardBody } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FieldError, Input, Label, Textarea } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import { PageContainer, PageHeader } from '@/components/common/PageHeader';
+import { PageHeader } from '@/components/common/PageHeader';
 import { formatDate, cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { isAxiosError } from 'axios';
@@ -66,7 +66,7 @@ export function ProjectsPage() {
   });
 
   return (
-    <PageContainer>
+    <div className="h-full flex flex-col p-6 lg:p-8 max-w-6xl w-full mx-auto">
       <PageHeader
         title="Projects"
         description="All projects you own or are a member of."
@@ -89,6 +89,7 @@ export function ProjectsPage() {
           </CardBody>
         </Card>
       ) : (
+        <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {projects.map((p) => (
             <Link key={p.id} to={`/projects/${p.id}`} className="group">
@@ -129,6 +130,7 @@ export function ProjectsPage() {
               </Card>
             </Link>
           ))}
+        </div>
         </div>
       )}
 
@@ -203,6 +205,6 @@ export function ProjectsPage() {
           </div>
         </form>
       </Modal>
-    </PageContainer>
+    </div>
   );
 }

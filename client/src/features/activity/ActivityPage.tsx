@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { activityApi } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
-import { PageContainer, PageHeader } from '@/components/common/PageHeader';
+import { PageHeader } from '@/components/common/PageHeader';
 import { Avatar } from '@/components/ui/Avatar';
 import { relativeTime } from '@/lib/utils';
 import { Link } from 'react-router-dom';
@@ -13,15 +13,15 @@ export function ActivityPage() {
   });
 
   return (
-    <PageContainer>
+    <div className="h-full flex flex-col p-6 lg:p-8 max-w-6xl w-full mx-auto">
       <PageHeader title="Activity" description="Recent activity across your projects." />
-      <Card>
+      <Card className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {isLoading ? (
           <p className="text-slate-500 p-5">Loading…</p>
         ) : activities.length === 0 ? (
           <p className="text-slate-600 p-5">No activity yet.</p>
         ) : (
-          <ul className="divide-y divide-slate-100 max-h-[calc(100vh-220px)] overflow-y-auto">
+          <ul className="divide-y divide-slate-100 flex-1 min-h-0 overflow-y-auto">
             {activities.map((a) => (
               <li key={a.id} className="flex gap-3 px-5 py-3">
                 <Avatar name={a.userName} />
@@ -49,6 +49,6 @@ export function ActivityPage() {
           </ul>
         )}
       </Card>
-    </PageContainer>
+    </div>
   );
 }

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { tasksApi } from '@/lib/api';
 import { Card, CardBody } from '@/components/ui/Card';
-import { PageContainer, PageHeader } from '@/components/common/PageHeader';
+import { PageHeader } from '@/components/common/PageHeader';
 import { PriorityBadge, StatusBadge } from '@/components/ui/Badge';
 import { Calendar } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
@@ -14,7 +14,7 @@ export function MyTasksPage() {
   });
 
   return (
-    <PageContainer>
+    <div className="h-full flex flex-col p-6 lg:p-8 max-w-6xl w-full mx-auto">
       <PageHeader title="My tasks" description="Tasks assigned to you across all projects." />
       {isLoading ? (
         <p className="text-slate-500">Loading…</p>
@@ -25,8 +25,9 @@ export function MyTasksPage() {
           </CardBody>
         </Card>
       ) : (
-        <Card>
-          <ul className="divide-y divide-slate-100">
+        <div className="flex-1 min-h-0">
+        <Card className="max-h-full flex flex-col overflow-hidden">
+          <ul className="divide-y divide-slate-100 overflow-y-auto">
             {tasks.map((t) => (
               <li key={t.id}>
                 <Link
@@ -53,7 +54,8 @@ export function MyTasksPage() {
             ))}
           </ul>
         </Card>
+        </div>
       )}
-    </PageContainer>
+    </div>
   );
 }
