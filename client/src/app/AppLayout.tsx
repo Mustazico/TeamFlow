@@ -1,10 +1,12 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
+import { useAgentStore } from '@/stores/agentStore';
 import { authApi } from '@/lib/api';
 import { Avatar } from '@/components/ui/Avatar';
 import { NotificationBell } from '@/components/common/NotificationBell';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
-import { LayoutDashboard, FolderKanban, Activity, LogOut, ListTodo } from 'lucide-react';
+import { AgentSidebar } from '@/features/agent/AgentSidebar';
+import { LayoutDashboard, FolderKanban, Activity, LogOut, ListTodo, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -16,6 +18,7 @@ const navItems = [
 
 export function AppLayout() {
   const { user, refreshToken, clear } = useAuthStore();
+  const { toggle: toggleAgent } = useAgentStore();
   const navigate = useNavigate();
 
   const logout = async () => {
@@ -88,6 +91,13 @@ export function AppLayout() {
             <span className="font-semibold text-lg text-slate-900">TeamFlow</span>
           </div>
           <div className="flex items-center gap-1 md:gap-2">
+            <button
+              onClick={toggleAgent}
+              className="p-2 rounded-md text-slate-600 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
+              title="AI Assistant"
+            >
+              <Bot size={18} />
+            </button>
             <ThemeToggle />
             <NotificationBell />
             {user && (
@@ -131,6 +141,7 @@ export function AppLayout() {
           ))}
         </nav>
       </main>
+      <AgentSidebar />
     </div>
   );
 }

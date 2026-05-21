@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddScoped<IActivityLogger, ActivityLogger>();
         services.AddScoped<Application.Auth.IAuthService, Services.AuthService>();
+        services.AddScoped<Application.Agent.IAgentService, Services.OpenAiAgentService>();
 
         return services;
     }

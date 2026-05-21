@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Mustazico/TeamFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/Mustazico/TeamFlow/actions/workflows/ci.yml)
 
-A production-shaped team / project / task workspace. Kanban, comments with @mentions, in-app notifications, activity feed, dark mode, role-based project membership, JWT + refresh-token auth.
+A production-shaped team / project / task workspace. Kanban, comments with @mentions, in-app notifications, activity feed, dark mode, role-based project membership, JWT + refresh-token auth, Google OAuth login, and an AI-powered chat assistant.
 
 Built to demonstrate Clean Architecture in .NET 10 and a modern React 19 + Tailwind v4 client end-to-end.
 
@@ -29,11 +29,12 @@ _Drop PNGs into [docs/screenshots/](docs/screenshots/) with the filenames above 
 ## Highlights
 
 - **Clean Architecture** — Domain / Application / Infrastructure / Api boundaries enforced via project references.
-- **Authentication** — ASP.NET Core Identity + JWT access tokens + refresh-token rotation with revoke-on-use.
+- **Authentication** — Google OAuth 2.0 login via `@react-oauth/google` on the client + server-side ID token validation with `Google.Apis.Auth`. JWT access tokens + refresh-token rotation with revoke-on-use. Guest login for read-only exploration.
 - **Authorization** — Per-project role model (Owner / Admin / Member / Viewer) checked in application services.
 - **Notifications** — In-app fan-out for task assignment and @-mentions, dedupes self / non-members, 10 s polling bell with unread badge.
 - **Activity feed** — Every write logs a structured `ActivityLog` row, exposed via the dashboard.
-- **Production hygiene** — Rate limiting (global 100 req/min/IP + tighter 5 req/min on auth), security headers (CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy, nosniff), `/health` endpoint with EF Core DB check, Serilog request logging, global exception middleware.
+- **AI Chat Assistant** — Collapsible sidebar powered by Azure OpenAI (GPT-4o). Supports natural language commands: create projects/tasks, move tasks, add comments, get overviews. Uses SSE streaming for real-time responses. Mutation actions open the actual application forms with pre-filled data for user verification before submission.
+- **Production hygiene** — Rate limiting (global 100 req/min/IP + tighter 5 req/min on auth + 20 req/min on AI agent), security headers (CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy, nosniff), `/health` endpoint with EF Core DB check, Serilog request logging, global exception middleware.
 - **Tests** — xUnit + FluentAssertions + EF Core InMemory. Service-level unit tests for Task / Project / Comment / Notification flows.
 - **CI** — GitHub Actions runs server build + tests, client lint + type-check + build, and both Docker images on every PR.
 - **Dark mode** — Tailwind v4 with `@custom-variant dark`; persists per user.
@@ -48,21 +49,25 @@ flowchart LR
         UI[Pages + Components]
         Q[TanStack Query]
         S[Zustand stores]
+        AI[AI Chat Sidebar]
     end
 
     subgraph Api [TeamFlow.Api]
         Ctl[Controllers]
+        AGT[AgentController — SSE streaming]
         MW[Middleware: SecurityHeaders / Exception / RateLimit / Auth]
     end
 
     subgraph App [TeamFlow.Application]
         SVC[Services: Task / Project / Comment / Notification / Auth]
+        ATE[AgentToolExecutor]
         DTO[DTOs + Validators]
     end
 
     subgraph Infra [TeamFlow.Infrastructure]
         EF[AppDbContext]
         ID[Identity + JWT]
+        OAI[OpenAI Agent Service]
     end
 
     subgraph Domain [TeamFlow.Domain]
@@ -70,8 +75,11 @@ flowchart LR
     end
 
     PG[(PostgreSQL 16)]
+    AZ[Azure OpenAI]
 
     UI --> Q --> Ctl
+    AI --> AGT --> OAI --> AZ
+    OAI --> ATE --> SVC
     Ctl --> SVC --> EF --> PG
     SVC --> ID
     App --> Domain
@@ -84,8 +92,8 @@ flowchart LR
 
 | Layer | Tech |
 |---|---|
-| Client | React 19, Vite, TypeScript, Tailwind v4, shadcn/ui patterns, TanStack Query, Zustand, React Router 7, React Hook Form + Zod, Recharts, dnd-kit, sonner |
-| Server | .NET 10 ASP.NET Core, EF Core 10 + Npgsql, ASP.NET Core Identity, JWT bearer, FluentValidation, Serilog |
+| Client | React 19, Vite, TypeScript, Tailwind v4, shadcn/ui patterns, TanStack Query, Zustand, React Router 7, React Hook Form + Zod, Recharts, dnd-kit, sonner, @react-oauth/google |
+| Server | .NET 10 ASP.NET Core, EF Core 10 + Npgsql, ASP.NET Core Identity, JWT bearer, FluentValidation, Serilog, Azure.AI.OpenAI, Google.Apis.Auth |
 | DB | PostgreSQL 16 |
 | Tests | xUnit, FluentAssertions, EF Core InMemory |
 | Ops | Docker (multi-stage), GitHub Actions, Fly.io (target) |
@@ -152,6 +160,10 @@ A local admin account is seeded on first migration in Development. See `server/T
 | `ConnectionStrings:Default` | Postgres connection string |
 | `Jwt:SigningKey` | **Required**, must be ≥ 32 chars. Set via `Jwt__SigningKey` env var in prod. |
 | `Jwt:Issuer` / `Jwt:Audience` | Default `TeamFlow` |
+| `Google:ClientId` | Google OAuth client ID for login |
+| `AzureAi:Endpoint` | Azure OpenAI endpoint URL |
+| `AzureAi:ApiKey` | Azure OpenAI API key |
+| `AzureAi:Deployments:ChatModel` | Model deployment name (e.g. `gpt-4o`) |
 
 ---
 
@@ -190,6 +202,8 @@ A `deploy.yml` workflow with `workflow_dispatch` can be added once a `FLY_API_TO
 - **Tailwind v4 dark mode via `@custom-variant`** — global utility overrides in `index.css` give comprehensive dark support without touching every component.
 - **Refresh-token rotation** — every refresh issues a new pair and revokes the previous; replay attempts revoke the entire family.
 - **No Identity endpoints exposed** — `AuthController` wraps Identity behind a thin DTO surface validated with FluentValidation, and is rate-limited (5 req/min/IP).
+- **Google OAuth** — Server validates the Google ID token directly (no redirect flow); the client uses `@react-oauth/google` for the consent popup. No passwords stored.
+- **AI agent with human-in-the-loop** — Mutation actions (create project/task, move task, add comment) open the real UI form pre-filled rather than executing blindly, so the user always verifies before committing. Read-only queries (list tasks, dashboard) execute immediately.
 
 ---
 
@@ -198,5 +212,6 @@ A `deploy.yml` workflow with `workflow_dispatch` can be added once a `FLY_API_TO
 - No realtime (planned: SignalR for notifications + board updates)
 - No file attachments on tasks / comments
 - No email delivery for notifications
+- AI agent chat history is session-only (not persisted to DB)
 - HTTP-level `WebApplicationFactory` integration tests scoped out for v1
 - Client unit tests scoped out for v1 (build + lint enforced in CI)

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { useActionModalStore } from '@/stores/actionModalStore';
 import {
   DndContext,
   PointerSensor,
@@ -98,6 +99,21 @@ export function ProjectDetailPage() {
     resolver: zodResolver(newTaskSchema),
     defaultValues: { priority: 'Medium' },
   });
+
+  // Open task modal with AI-prefilled values
+  const { createTask: aiCreateTask, closeCreateTask } = useActionModalStore();
+  useEffect(() => {
+    if (aiCreateTask.open && aiCreateTask.prefill && aiCreateTask.prefill.projectId === projectId) {
+      taskForm.reset({
+        title: aiCreateTask.prefill.title,
+        description: aiCreateTask.prefill.description ?? '',
+        priority: (aiCreateTask.prefill.priority as NewTaskValues['priority']) ?? 'Medium',
+        assigneeId: aiCreateTask.prefill.assigneeId ?? '',
+      });
+      setAddTaskOpen(true);
+      closeCreateTask();
+    }
+  }, [aiCreateTask, taskForm, closeCreateTask, projectId]);
 
   const memberForm = useForm<MemberValues>({
     resolver: zodResolver(memberSchema),

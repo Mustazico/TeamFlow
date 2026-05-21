@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { formatDate, cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { isAxiosError } from 'axios';
+import { useActionModalStore } from '@/stores/actionModalStore';
 
 const DEFAULT_COLOR = '#6366f1';
 const PALETTE = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'];
@@ -32,6 +33,7 @@ type CreateValues = z.infer<typeof createSchema>;
 export function ProjectsPage() {
   const [open, setOpen] = useState(false);
   const qc = useQueryClient();
+  const { createProject: aiCreateProject, closeCreateProject } = useActionModalStore();
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['projects'],
@@ -48,6 +50,19 @@ export function ProjectsPage() {
     resolver: zodResolver(createSchema),
     defaultValues: { color: DEFAULT_COLOR },
   });
+
+  // Open modal with AI-prefilled values
+  useEffect(() => {
+    if (aiCreateProject.open && aiCreateProject.prefill) {
+      reset({
+        name: aiCreateProject.prefill.name,
+        description: aiCreateProject.prefill.description ?? '',
+        color: aiCreateProject.prefill.color || DEFAULT_COLOR,
+      });
+      setOpen(true);
+      closeCreateProject();
+    }
+  }, [aiCreateProject, reset, closeCreateProject]);
 
   const createMutation = useMutation({
     mutationFn: projectsApi.create,

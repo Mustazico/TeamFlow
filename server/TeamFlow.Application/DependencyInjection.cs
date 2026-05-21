@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<Activity.IActivityService, Activity.ActivityService>();
         services.AddScoped<Dashboard.IDashboardService, Dashboard.DashboardService>();
         services.AddScoped<Notifications.INotificationService, Notifications.NotificationService>();
+        services.AddScoped<Agent.IAgentToolExecutor, Agent.AgentToolExecutor>();
         return services;
     }
 }
